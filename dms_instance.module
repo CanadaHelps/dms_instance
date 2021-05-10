@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * Contains dms_instance.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function dms_instance_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the dms_instance module.
+    case 'help.page.dms_instance':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('CanadaHelps DMS instance module') . '</p>';
+      return $output;
+
+    default:
+  }
+}

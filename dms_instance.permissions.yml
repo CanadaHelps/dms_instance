@@ -1,0 +1,20 @@
+add dms instance entities:
+  title: 'Create new DMS Instance entities'
+
+administer dms instance entities:
+  title: 'Administer DMS Instance entities'
+  description: 'Allow to access the administration form to configure DMS Instance entities.'
+  restrict access: true
+
+delete dms instance entities:
+  title: 'Delete DMS Instance entities'
+
+edit dms instance entities:
+  title: 'Edit DMS Instance entities'
+
+view published dms instance entities:
+  title: 'View published DMS Instance entities'
+
+view unpublished dms instance entities:
+  title: 'View unpublished DMS Instance entities'
+
