@@ -4,7 +4,7 @@
  * Add in aegir_instance column for dms_instance
  */
 function dms_instance_update_9101() {
-  $field_storage_definition = BaseFieldDefinition::create('string')
+  $field_storage_definition = \Drupal\Core\Field\BaseFieldDefinition::create('string')
     ->setLabel(t('Aegir instance'))
     ->setDescription(t('Full domain name of the aegir instance'))
     ->setRequired(TRUE)
