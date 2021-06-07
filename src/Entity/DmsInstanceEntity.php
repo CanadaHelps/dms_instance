@@ -372,6 +372,24 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
+    $fields['aegir_instance'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Aegir instance'))
+      ->setDescription(t('Full domain name of the aegir instance'))
+      ->setRequired(TRUE)
+      ->setStorageRequired(TRUE)
+      ->setSettings([
+        'default_value' => 'aegir.canadahelps.org',
+        'max_length' => 255,
+      ])
+      ->setDisplayOptions('view', [
+        'label' => 'hidden',
+        'type' => 'text_default',
+        'weight' => 0,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 0,
+      ]);
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
       ->setDescription(t('The time that the entity was created.'));
