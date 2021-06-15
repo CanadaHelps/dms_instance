@@ -211,7 +211,7 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
       'weight' => 0,
     ]);
   $fields['email_password'] = BaseFieldDefinition::create('string')
-    ->setLabel(t('DMS Email Adress password'))
+    ->setLabel(t('DMS Email Address password'))
     ->setDescription(t('Password to login to the DMS Email inbox'))
     ->setRequired(TRUE)
     ->setStorageRequired(TRUE)
