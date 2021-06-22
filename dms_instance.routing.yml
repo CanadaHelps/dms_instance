@@ -1,0 +1,8 @@
+dms_instance.azure_token:
+  path: '/dms_instance/azure_token'
+  defaults:
+    _controller: 'Drupal\dms_instance\Controller\AzureTokenController::renderToken'
+    _title: 'AzureToken'
+  methods: [GET]
+  requirements:
+    _permission: 'add dms instance entities'
