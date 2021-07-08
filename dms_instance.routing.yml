@@ -6,3 +6,11 @@ dms_instance.azure_token:
   methods: [GET]
   requirements:
     _permission: 'add dms instance entities'
+dms_instance.item_process:
+  path: '/dms_instance/item_process'
+  defaults:
+    _controller: 'Drupal\dms_instance\Controller\ItemProcess::processJobReturn'
+    _title: 'Aegir job Item Process'
+  methods: [GET]
+  requirements:
+    _permission: 'add dms instance entities'

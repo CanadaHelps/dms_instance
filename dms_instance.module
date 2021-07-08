@@ -7,6 +7,10 @@
 
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Database\Database;
+use Drupal\Core\Queue\DatabaseQueue; 
+use Drupal\dms_instance\Queue\DMSInstanceQueue;
 
 /**
  * Implements hook_help().
@@ -32,5 +36,48 @@ function dms_instance_jsonapi_entity_filter_access(\Drupal\Core\Entity\EntityTyp
     return [
       JSONAPI_FILTER_AMONG_ALL => AccessResult::allowedIfHasPermission($account, $admin_permission),
     ];
+  }
+}
+
+function dms_instance_dms_instance_insert(EntityInterface $entity) {
+  $uuid = $entity->uuid();
+  $queue = new DMSInstanceQueue($entity->getAegirInstance(), Database::getConnection());
+  $queue->createQueue();
+  $queue->createItem([
+    'url' => $entity->getName() . '.canadahelps.org',
+    'dms_instance_id' => $uuid,
+    'aegir_instance' => $entity->getAegirInstance(),
+  ]);
+}
+
+function aegirInstances() {
+  return [
+    'aegir.canadahelps.org',
+    'aegir2.canadahelps.org',
+  ];
+}
+
+function dms_instance_cron() {
+  foreach (aegirInstances() as $aegirInstance) {
+    $queue = new DMSInstanceQueue($aegirInstance, Database::getConnection());
+    $count = Database::getConnection()->query('SELECT COUNT(item_id) FROM {queue} WHERE [name] = :name AND [expire] != 0', [':name' => $aegirInstance])->rowCount();
+    // Do not process any more objects if there are already ones in process.
+    if ($count) {
+      continue;
+    }
+    $item = $queue->claimItem(600);
+    $item->data['item_id'] = $item->item_id;
+    try {
+      \Drupal::httpClient()->post($item->data['aegir_instance'] . '/canadahelps/api/site', [
+        'body' => json_encode($item->data),
+        'timeout' => 10,
+        'headers' => [
+          'Accept' => 'application/json', 
+          'Content-Type' => 'application/json'
+        ],
+      ]);
+    }
+    catch (\Exception $e) {
+    }
   }
 }

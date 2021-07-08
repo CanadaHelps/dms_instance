@@ -56,4 +56,9 @@ interface DmsInstanceEntityInterface extends ContentEntityInterface, EntityChang
    */
   public function setCreatedTime($timestamp);
 
+  /**
+   * Get the Aegir Instance record.
+   */
+  public function getAegirInstance();
+
 }
