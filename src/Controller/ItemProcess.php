@@ -4,6 +4,7 @@ namespace Drupal\dms_instance\Controller;
 
 use Drupal\Core\Database\Database;
 use Drupal\dms_instance\Queue\DMSInstanceQueue;
+use Drupal\Core\Controller\ControllerBase;
 
 class ItemProcess extends ControllerBase {
 
