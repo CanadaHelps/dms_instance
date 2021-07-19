@@ -13,6 +13,11 @@ class ItemProcess extends ControllerBase {
   public function processJobReturn() {
     $item_id = \Drupal::request()->query->get('job_id');
     $aegir_instance = \Drupal::request()->query->get('aegir_instance');
+    $dms_instance_id = \Drupal::request()->query->get('dms_instance_id');
+    $dms_instnace = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $dms_instance_id]);
+    reset($dms_instance);
+    $dms_instance->instance_status = 1;
+    $dms_instance->save();
     $queue = new DMSInstanceQueue($aegir_instance, Database::getConnection());
     $item = new \stdClass();
     $item->item_id = $item_id;
