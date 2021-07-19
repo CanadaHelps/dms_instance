@@ -69,15 +69,19 @@ function dms_instance_cron() {
       continue;
     }
     $item = $queue->claimItem(600);
+    if (empty($item->item_id)) {
+      continue;
+    }      
     $item->data['item_id'] = $item->item_id;
     try {
       $request = \Drupal::httpClient()->request('post', 'https://' . $item->data['aegir_instance'] . '/canadahelps/api/site', [
         'form_params' => $item->data,
         'timeout' => 10,
       ]);
+      \Drupal::logger('dms_instance')->debug('%request, %body', ['%body' => $request->getBody()->getContents()]);
     }
     catch (\Exception $e) {
-      \Drupal::logger('dms_instance')->debug($e->getMessage());
+      \Drupal::logger('dms_instance')->debug($e->getMessage() . '%item', ['%item' => var_export($item, TRUE)]);
     }
   }
 }
