@@ -14,8 +14,9 @@ class ItemProcess extends ControllerBase {
     $item_id = \Drupal::request()->query->get('job_id');
     $aegir_instance = \Drupal::request()->query->get('aegir_instance');
     $dms_instance_id = \Drupal::request()->query->get('dms_instance_id');
-    $dms_instnace = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $dms_instance_id]);
+    $dms_instance = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $dms_instance_id]);
     reset($dms_instance);
+    $dms_instance_id = array_values($dms_instance)[0];
     $dms_instance->instance_status = 1;
     $dms_instance->save();
     $queue = new DMSInstanceQueue($aegir_instance, Database::getConnection());
