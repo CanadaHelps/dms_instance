@@ -26,3 +26,27 @@ function dms_instance_update_9101() {
   \Drupal::entityDefinitionUpdateManager()
     ->installFieldStorageDefinition('aegir_instance', 'dms_instance', 'dms_instance', $field_storage_definition);
 }
+
+function dms_instance_update_9102() {
+  $field_storage_definition = \Drupal\Core\Field\BaseFieldDefinition::create('string')
+    ->setLabel(t('Status History'))
+    ->setDescription(t('Status versioning to hold previous instance status'))
+    ->setRequired(TRUE)
+    ->setStorageRequired(TRUE)
+    ->setRevisionable(TRUE)
+    ->setSettings([
+      'max_length' => 255,
+    ])
+    ->setDisplayOptions('view', [
+      'label' => 'hidden',
+      'type' => 'text_default',
+      'weight' => 0,
+    ])
+    ->setDisplayOptions('form', [
+       'type' => 'options_select',
+       'weight' => 0,
+    ]);
+
+  \Drupal::entityDefinitionUpdateManager()
+    ->installFieldStorageDefinition('status_history', 'dms_instance', 'dms_instance', $field_storage_definition);
+}
