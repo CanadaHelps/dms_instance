@@ -177,7 +177,7 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
     $fields['email_address'] = BaseFieldDefinition::create('string')
     ->setLabel(t('DMS Email Address'))
     ->setDescription(t('The email address from gmail associated with this DMS instance'))
-    ->setRequired(TRUE)
+    ->setRequired(FALSE)
     ->setStorageRequired(TRUE)
     ->setSettings([
       'default_value' => '',
@@ -195,7 +195,7 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
   $fields['email_name'] = BaseFieldDefinition::create('string')
     ->setLabel(t('DMS Email Address username'))
     ->setDescription(t('User name to login to the DMS Email inbox'))
-    ->setRequired(TRUE)
+    ->setRequired(FALSE)
     ->setStorageRequired(TRUE)
     ->setSettings([
       'default_value' => '',
@@ -213,7 +213,7 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
   $fields['email_password'] = BaseFieldDefinition::create('string')
     ->setLabel(t('DMS Email Address password'))
     ->setDescription(t('Password to login to the DMS Email inbox'))
-    ->setRequired(TRUE)
+    ->setRequired(FALSE)
     ->setStorageRequired(TRUE)
     ->setSettings([
       'default_value' => '',
@@ -242,7 +242,7 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
   $fields['smtp_service'] = BaseFieldDefinition::create('list_string')
     ->setLabel(t('DMS Outbound SMTP Service'))
     ->setDescription(t('SMTP service used by the DMS to send emails out'))
-    ->setRequired(TRUE)
+    ->setRequired(FALSE)
     ->setStorageRequired(TRUE)
     ->setSettings([
       'max_length' => 40,
