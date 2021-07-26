@@ -58,6 +58,7 @@ use Drupal\user\UserInterface;
  *     "collection" = "/admin/dms/dms_instance",
  *   },
  *   revision_metadata_keys = {
+ *     "revision_default" = "revision_default",
  *     "revision_user" = "revision_user",
  *     "revision_created" = "revision_created",
  *     "revision_log_message" = "revision_log_message",
