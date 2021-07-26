@@ -410,7 +410,46 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
     $fields['changed'] = BaseFieldDefinition::create('changed')
       ->setLabel(t('Changed'))
       ->setDescription(t('The time that the entity was last edited.'));
-
+      $fields['revision_id'] = BaseFieldDefinition::create('integer')
+      ->setName('revision_id')
+      ->setLabel(new TranslatableMarkup('Revision ID'))
+      ->setReadOnly(TRUE)
+      ->setSetting('unsigned', TRUE);
+    
+    $fields['revision_default'] = BaseFieldDefinition::create('boolean')
+      ->setName('revision_default')
+      ->setLabel(new TranslatableMarkup('Default revision'))
+      ->setDescription(new TranslatableMarkup('A flag indicating whether this was a default revision when it was saved.'))
+      ->setStorageRequired(TRUE)
+      ->setInternal(TRUE)
+      ->setTranslatable(FALSE)
+      ->setRevisionable(TRUE);
+    
+    $fields['revision_translation_affected'] = BaseFieldDefinition::create('boolean')
+      ->setName('revision_translation_affected')
+      ->setLabel(new TranslatableMarkup('Revision translation affected'))
+      ->setDescription(new TranslatableMarkup('Indicates if the last edit of a translation belongs to current revision.'))
+      ->setReadOnly(TRUE)
+      ->setRevisionable(TRUE)
+      ->setTranslatable(TRUE);
+    
+    $fields['revision_created'] = BaseFieldDefinition::create('created')
+      ->setName('revision_created')
+      ->setLabel(new TranslatableMarkup('Revision create time'))
+      ->setDescription(new TranslatableMarkup('The time that the current revision was created.'))
+      ->setRevisionable(TRUE);
+    $fields['revision_user'] = BaseFieldDefinition::create('entity_reference')
+      ->setName('revision_user')
+      ->setLabel(new TranslatableMarkup('Revision user'))
+      ->setDescription(new TranslatableMarkup('The user ID of the author of the current revision.'))
+      ->setSetting('target_type', 'user')
+      ->setRevisionable(TRUE);
+    $fields['revision_log_message'] = BaseFieldDefinition::create('string_long')
+      ->setName('revision_log_message')
+      ->setLabel(new TranslatableMarkup('Revision log message'))
+      ->setDescription(new TranslatableMarkup('Briefly describe the changes you have made.'))
+      ->setRevisionable(TRUE)
+      ->setDefaultValue('');
     return $fields;
   }
 

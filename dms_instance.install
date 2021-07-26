@@ -49,6 +49,8 @@ function dms_instance_update_9103(&$sandbox) {
   $entity_keys = $entity_type->getKeys();
   $entity_keys['revision'] = 'revision_id';
   $entity_type->set('entity_keys', $entity_keys);
+  $entity_type->set('revision_table', 'dms_instance_revision');
+  $entity_type->set('revision_data_table', 'dms_instance_field_data_revision');
   $revision_metadata_keys = [
     'revision_default' => 'revision_default',
     'revision_user' => 'revision_user',
