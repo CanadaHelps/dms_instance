@@ -39,6 +39,7 @@ use Drupal\user\UserInterface;
  *   data_table = "dms_instance_field_data",
  *   translatable = TRUE,
  *   revision_table = "dms_instance_revision",
+ *   revision_data_table = "dms_instance_field_data_revision",
  *   admin_permission = "administer dms instance entities",
  *   entity_keys = {
  *     "id" = "id",
@@ -55,6 +56,11 @@ use Drupal\user\UserInterface;
  *     "edit-form" = "/admin/dms/dms_instance/{dms_instance}/edit",
  *     "delete-form" = "/admin/dms/dms_instance/{dms_instance}/delete",
  *     "collection" = "/admin/dms/dms_instance",
+ *   },
+ *   revision_metadata_keys = {
+ *     "revision_user" = "revision_user",
+ *     "revision_created" = "revision_created",
+ *     "revision_log_message" = "revision_log_message",
  *   },
  *   field_ui_base_route = "dms_instance.settings"
  * )

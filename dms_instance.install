@@ -40,3 +40,18 @@ function dms_instance_update_9102() {
     $definition_manager->updateFieldStorageDefinition($field_storage_definition);
   }
 }
+
+function dms_instance_update_9103() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = $definition_update_manager->getEntityType('dms_instance');
+  $entity_keys = $entity_type->getKeys();
+  $entity_keys['revision'] = 'revision_id';
+  $entity_type->set('entity_keys', $entity_keys);
+  $revision_metadata_keys = [
+    'revision_user' => 'revision_user',
+    'revision_created' => 'revision_created',
+    'revision_log_message' => 'revision_log_message'
+  ];
+  $entity_type->set('revision_metadata_keys', $revision_metadata_keys);
+  $definition_update_manager->updateEntityType($entity_type);
+}
