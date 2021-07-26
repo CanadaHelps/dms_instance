@@ -1,4 +1,6 @@
 <?php
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Add in aegir_instance column for dms_instance
