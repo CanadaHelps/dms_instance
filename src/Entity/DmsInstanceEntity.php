@@ -38,9 +38,11 @@ use Drupal\user\UserInterface;
  *   base_table = "dms_instance",
  *   data_table = "dms_instance_field_data",
  *   translatable = TRUE,
+ *   revision_table = "dms_instance_revision",
  *   admin_permission = "administer dms instance entities",
  *   entity_keys = {
  *     "id" = "id",
+ *     "revision" = "revision_id",
  *     "label" = "instance_prefix",
  *     "uuid" = "uuid",
  *     "uid" = "user_id",
