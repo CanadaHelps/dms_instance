@@ -7,6 +7,10 @@
 
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Database\Database;
+use Drupal\Core\Queue\DatabaseQueue; 
+use Drupal\dms_instance\Queue\DMSInstanceQueue;
 
 /**
  * Implements hook_help().
@@ -32,5 +36,52 @@ function dms_instance_jsonapi_entity_filter_access(\Drupal\Core\Entity\EntityTyp
     return [
       JSONAPI_FILTER_AMONG_ALL => AccessResult::allowedIfHasPermission($account, $admin_permission),
     ];
+  }
+}
+
+function dms_instance_dms_instance_insert(EntityInterface $entity) {
+  $uuid = $entity->uuid();
+  $queue = new DMSInstanceQueue($entity->getAegirInstance(), Database::getConnection());
+  $queue->createQueue();
+  $queue->createItem([
+    'url' => $entity->getName() . '-dms.canadahelps.org',
+    'dms_instance_id' => $uuid,
+    'aegir_instance' => $entity->getAegirInstance(),
+  ]);
+}
+
+function aegirInstances() {
+  return [
+    'aegir.canadahelps.org',
+    'aegir2.canadahelps.org',
+    'b2.jmaconsulting.biz',
+    'b6.jmaconsulting.biz',
+  ];
+}
+
+function dms_instance_cron() {
+  foreach (aegirInstances() as $aegirInstance) {
+    $queue = new DMSInstanceQueue($aegirInstance, Database::getConnection());
+    $queue->createQueue();
+    $count = Database::getConnection()->query('SELECT COUNT(item_id) as count FROM {queue} WHERE [name] = :name AND [expire] != 0', [':name' => $aegirInstance])->fetchField();
+    // Do not process any more objects if there are already ones in process.
+    if ($count) {
+      continue;
+    }
+    $item = $queue->claimItem(600);
+    if (empty($item->item_id)) {
+      continue;
+    }      
+    $item->data['item_id'] = $item->item_id;
+    try {
+      $request = \Drupal::httpClient()->request('post', 'https://' . $item->data['aegir_instance'] . '/canadahelps/api/site', [
+        'form_params' => $item->data,
+        'timeout' => 10,
+      ]);
+      \Drupal::logger('dms_instance')->debug('%request, %body', ['%body' => $request->getBody()->getContents()]);
+    }
+    catch (\Exception $e) {
+      \Drupal::logger('dms_instance')->debug($e->getMessage() . '%item', ['%item' => var_export($item, TRUE)]);
+    }
   }
 }

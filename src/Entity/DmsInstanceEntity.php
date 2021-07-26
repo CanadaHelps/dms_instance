@@ -124,6 +124,10 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
     return $this;
   }
 
+  public function getAegirInstance() {
+    return $this->get('aegir_instance')->value;
+  }
+
   /**
    * {@inheritdoc}
    */
