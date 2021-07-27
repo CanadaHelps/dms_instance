@@ -41,15 +41,27 @@ function dms_instance_jsonapi_entity_filter_access(\Drupal\Core\Entity\EntityTyp
   }
 }
 
+
+function dms_instance_dms_instance_update(EntityInterface $entity) {
+  dms_instance_insert_update($entity);
+}
+
 function dms_instance_dms_instance_insert(EntityInterface $entity) {
-  $uuid = $entity->uuid();
-  $queue = new DMSInstanceQueue($entity->getAegirInstance(), Database::getConnection());
-  $queue->createQueue();
-  $queue->createItem([
-    'url' => $entity->getName() . '-dms.canadahelps.org',
-    'dms_instance_id' => $uuid,
-    'aegir_instance' => $entity->getAegirInstance(),
-  ]);
+  dms_instance_insert_update($entity);
+}
+
+function dms_instance_insert_update(EntityInterface $entity) {
+  $instanceStatus = $entity->get('instance_status')->value;
+  if ($instanceStatus == 16) {
+    $uuid = $entity->uuid();
+    $queue = new DMSInstanceQueue($entity->getAegirInstance(), Database::getConnection());
+    $queue->createQueue();
+    $queue->createItem([
+      'url' => $entity->getName() . '-dms.canadahelps.org',
+      'dms_instance_id' => $uuid,
+      'aegir_instance' => $entity->getAegirInstance(),
+    ]);
+  }
 }
 
 function aegirInstances() {
