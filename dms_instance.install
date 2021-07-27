@@ -43,6 +43,9 @@ function dms_instance_update_9102() {
   }
 }
 
+/**
+ * Add in columns to make the instance revisionable
+ */
 function dms_instance_update_9103(&$sandbox) {
   $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
   $entity_type = $definition_update_manager->getEntityType('dms_instance');
@@ -112,5 +115,19 @@ $field_storage_definitions['revision_log_message'] = BaseFieldDefinition::create
   ->setDescription(new TranslatableMarkup('Briefly describe the changes you have made.'))
   ->setRevisionable(TRUE)
   ->setDefaultValue('');
+  $definition_update_manager->updateFieldableEntityType($entity_type, $field_storage_definitions, $sandbox);
+}
+
+/**
+ * Make instance status revisionable and also work with a function callback as the set of allowable values
+ */
+function dms_instance_update_9104(&$sandbox) {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  /** @var \Drupal\Core\Entity\EntityLastInstalledSchemaRepositoryInterface $last_installed_schema_repository */
+  $last_installed_schema_repository = \Drupal::service('entity.last_installed_schema.repository');
+  $field_storage_definitions = $last_installed_schema_repository->getLastInstalledFieldStorageDefinitions('dms_instance');
+  $entity_type = $definition_update_manager->getEntityType('dms_instance');
+  $field_storage_definitions['instance_status']->setSettings(['allowed_values' => [], 'allowed_values_function' => 'dms_instance_allowed_values_function']);
+  $field_storage_definitions['instance_status']->setRevisionable(TRUE);
   $definition_update_manager->updateFieldableEntityType($entity_type, $field_storage_definitions, $sandbox);
 }

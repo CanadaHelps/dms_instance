@@ -4,12 +4,12 @@ namespace Drupal\dms_instance\Entity;
 
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\Core\Entity\ContentEntityBase;
+use Drupal\Core\Entity\EditorialContentEntityBase;
+use Drupal\Core\Entity\RevisionableInterface;
 use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityPublishedTrait;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\user\UserInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
  * Defines the DMS Instance entity.
@@ -20,6 +20,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  *   id = "dms_instance",
  *   label = @Translation("DMS Instance"),
  *   handlers = {
+ *     "storage" = "Drupal\dms_instance\DmsInstanceEntityStorage",
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "list_builder" = "Drupal\dms_instance\DmsInstanceEntityListBuilder",
  *     "views_data" = "Drupal\dms_instance\Entity\DmsInstanceEntityViewsData",
@@ -38,9 +39,9 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  *   },
  *   base_table = "dms_instance",
  *   data_table = "dms_instance_field_data",
- *   translatable = TRUE,
  *   revision_table = "dms_instance_revision",
- *   revision_data_table = "dms_instance_field_data_revision",
+ *   revision_data_table = "dms_instance_field_revision",
+ *   translatable = TRUE,
  *   admin_permission = "administer dms instance entities",
  *   entity_keys = {
  *     "id" = "id",
@@ -56,6 +57,11 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  *     "add-form" = "/admin/dms/dms_instance/add",
  *     "edit-form" = "/admin/dms/dms_instance/{dms_instance}/edit",
  *     "delete-form" = "/admin/dms/dms_instance/{dms_instance}/delete",
+ *     "version-history" = "/admin/dms/dms_instance/{dms_instance}/revisions",
+ *     "revision" = "/admin/dms/dms_instance/{dms_instance}/revisions/{dms_instance_revision}/view",
+ *     "revision_revert" = "/admin/dms/dms_instance/{dms_instance}/revisions/{dms_instance_revision}/revert",
+ *     "revision_delete" = "/admin/dms/dms_instance/{dms_instance}/revisions/{dms_instance_revision}/delete",
+ *     "translation_revert" = "/admin/dms/dms_instance/{dms_instance}/revisions/{dms_instance_revision}/revert/{langcode}",
  *     "collection" = "/admin/dms/dms_instance",
  *   },
  *   revision_metadata_keys = {
@@ -67,7 +73,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  *   field_ui_base_route = "dms_instance.settings"
  * )
  */
-class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityInterface {
+class DmsInstanceEntity extends EditorialContentEntityBase implements DmsInstanceEntityInterface {
 
   use EntityChangedTrait;
   use EntityPublishedTrait;
@@ -80,6 +86,44 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
     $values += [
       'user_id' => \Drupal::currentUser()->id(),
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function urlRouteParameters($rel) {
+    $uri_route_parameters = parent::urlRouteParameters($rel);
+
+    if ($rel === 'revision_revert' && $this instanceof RevisionableInterface) {
+      $uri_route_parameters[$this->getEntityTypeId() . '_revision'] = $this->getRevisionId();
+    }
+    elseif ($rel === 'revision_delete' && $this instanceof RevisionableInterface) {
+      $uri_route_parameters[$this->getEntityTypeId() . '_revision'] = $this->getRevisionId();
+    }
+
+    return $uri_route_parameters;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function preSave(EntityStorageInterface $storage) {
+    parent::preSave($storage);
+
+    foreach (array_keys($this->getTranslationLanguages()) as $langcode) {
+      $translation = $this->getTranslation($langcode);
+
+      // If no owner has been set explicitly, make the anonymous user the owner.
+      if (!$translation->getOwner()) {
+        $translation->setOwnerId(0);
+      }
+    }
+
+    // If no revision author has been set explicitly,
+    // make the dms_instance owner the revision author.
+    if (!$this->getRevisionUser()) {
+      $this->setRevisionUserId($this->getOwnerId());
+    }
   }
 
   /**
@@ -134,16 +178,16 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
     return $this;
   }
 
-  public function getAegirInstance() {
-    return $this->get('aegir_instance')->value;
-  }
-
   /**
    * {@inheritdoc}
    */
   public function setOwner(UserInterface $account) {
     $this->set('user_id', $account->id());
     return $this;
+  }
+
+  public function getAegirInstance() {
+    return $this->get('aegir_instance')->value;
   }
 
   /**
@@ -347,10 +391,12 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
     ->setDescription(t('Current Status of the DMS instance'))
     ->setRequired(TRUE)
     ->setStorageRequired(TRUE)
+    ->setRevisionable(TRUE)
     ->setSettings([
       'default_value' => 0,
       'max_length' => 40,
-      'allowed_values' => [0 => 'Config Saved', 1 => 'Instance Created', 2 => 'CH Data Pushed', 3 => 'Config Pushed to Instance'],
+      'allowed_values' => [],
+      'allowed_values_function' => 'dms_instance_allowed_values_function',
     ])
     ->setDisplayOptions('view', [
       'label' => 'hidden',
@@ -360,7 +406,8 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
     ->setDisplayOptions('form', [
       'type' => 'options_select',
       'weight' => 0,
-    ]);
+    ])
+    ->setDisplayConfigurable('form', TRUE);
 
     $fields['user_id'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Authored by'))
@@ -386,6 +433,7 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
+
     $fields['aegir_instance'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Aegir instance'))
       ->setDescription(t('Full domain name of the aegir instance'))
@@ -404,6 +452,13 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
         'type' => 'string_textfield',
         'weight' => 0,
       ]);
+
+    $fields['status']->setDescription(t('A boolean indicating whether the DMS Instance is published.'))
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+        'weight' => -3,
+      ]);
+
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
       ->setDescription(t('The time that the entity was created.'));
@@ -411,44 +466,44 @@ class DmsInstanceEntity extends ContentEntityBase implements DmsInstanceEntityIn
     $fields['changed'] = BaseFieldDefinition::create('changed')
       ->setLabel(t('Changed'))
       ->setDescription(t('The time that the entity was last edited.'));
-      $fields['revision_id'] = BaseFieldDefinition::create('integer')
+
+    $fields['revision_id'] = BaseFieldDefinition::create('integer')
       ->setName('revision_id')
-      ->setLabel(new TranslatableMarkup('Revision ID'))
+      ->setLabel(t('Revision ID'))
       ->setReadOnly(TRUE)
       ->setSetting('unsigned', TRUE);
-    
+
     $fields['revision_default'] = BaseFieldDefinition::create('boolean')
       ->setName('revision_default')
-      ->setLabel(new TranslatableMarkup('Default revision'))
-      ->setDescription(new TranslatableMarkup('A flag indicating whether this was a default revision when it was saved.'))
+      ->setLabel(t('Default revision'))
+      ->setDescription(t('A flag indicating whether this was a default revision when it was saved.'))
       ->setStorageRequired(TRUE)
       ->setInternal(TRUE)
       ->setTranslatable(FALSE)
       ->setRevisionable(TRUE);
-    
+
     $fields['revision_translation_affected'] = BaseFieldDefinition::create('boolean')
-      ->setName('revision_translation_affected')
-      ->setLabel(new TranslatableMarkup('Revision translation affected'))
-      ->setDescription(new TranslatableMarkup('Indicates if the last edit of a translation belongs to current revision.'))
+      ->setLabel(t('Revision translation affected'))
+      ->setDescription(t('Indicates if the last edit of a translation belongs to current revision.'))
       ->setReadOnly(TRUE)
       ->setRevisionable(TRUE)
       ->setTranslatable(TRUE);
-    
+
     $fields['revision_created'] = BaseFieldDefinition::create('created')
       ->setName('revision_created')
-      ->setLabel(new TranslatableMarkup('Revision create time'))
-      ->setDescription(new TranslatableMarkup('The time that the current revision was created.'))
+      ->setLabel(t('Revision create time'))
+      ->setDescription(t('The time that the current revision was created.'))
       ->setRevisionable(TRUE);
     $fields['revision_user'] = BaseFieldDefinition::create('entity_reference')
       ->setName('revision_user')
-      ->setLabel(new TranslatableMarkup('Revision user'))
-      ->setDescription(new TranslatableMarkup('The user ID of the author of the current revision.'))
+      ->setLabel(t('Revision user'))
+      ->setDescription(t('The user ID of the author of the current revision.'))
       ->setSetting('target_type', 'user')
       ->setRevisionable(TRUE);
     $fields['revision_log_message'] = BaseFieldDefinition::create('string_long')
       ->setName('revision_log_message')
-      ->setLabel(new TranslatableMarkup('Revision log message'))
-      ->setDescription(new TranslatableMarkup('Briefly describe the changes you have made.'))
+      ->setLabel(t('Revision log message'))
+      ->setDescription(t('Briefly describe the changes you have made.'))
       ->setRevisionable(TRUE)
       ->setDefaultValue('');
     return $fields;

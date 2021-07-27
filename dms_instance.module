@@ -11,6 +11,8 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Queue\DatabaseQueue; 
 use Drupal\dms_instance\Queue\DMSInstanceQueue;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
 
 /**
  * Implements hook_help().
@@ -84,4 +86,16 @@ function dms_instance_cron() {
       \Drupal::logger('dms_instance')->debug($e->getMessage() . '%item', ['%item' => var_export($item, TRUE)]);
     }
   }
+}
+
+function dms_instance_allowed_values_function(FieldStorageDefinitionInterface $definition, FieldableEntityInterface $entity = NULL, $cacheable) {
+  $config = \Drupal::config('dms_instance.settings');
+  $instance_statues = $config->get('instance_statuses');
+  $instance_statues_saved = explode("\n", $instance_statues);
+  $statuses = [];
+  foreach ($instance_statues_saved as $instanceStatus) {
+    $status = explode(' | ', $instanceStatus);
+    $statuses[$status[0]] = $status[1];
+  }
+  return $statuses;
 }

@@ -3,6 +3,7 @@
 namespace Drupal\dms_instance\Entity;
 
 use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\RevisionLogInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\Core\Entity\EntityPublishedInterface;
 use Drupal\user\EntityOwnerInterface;
@@ -12,7 +13,7 @@ use Drupal\user\EntityOwnerInterface;
  *
  * @ingroup dms_instance
  */
-interface DmsInstanceEntityInterface extends ContentEntityInterface, EntityChangedInterface, EntityPublishedInterface, EntityOwnerInterface {
+interface DmsInstanceEntityInterface extends ContentEntityInterface, RevisionLogInterface, EntityChangedInterface, EntityPublishedInterface, EntityOwnerInterface {
 
   /**
    * Add get/set methods for your configuration properties here.
@@ -57,8 +58,43 @@ interface DmsInstanceEntityInterface extends ContentEntityInterface, EntityChang
   public function setCreatedTime($timestamp);
 
   /**
-   * Get the Aegir Instance record.
+   * Gets the DMS Instance revision creation timestamp.
+   *
+   * @return int
+   *   The UNIX timestamp of when this revision was created.
    */
+  public function getRevisionCreationTime();
+
+  /**
+   * Sets the DMS Instance revision creation timestamp.
+   *
+   * @param int $timestamp
+   *   The UNIX timestamp of when this revision was created.
+   *
+   * @return \Drupal\dms_instance\Entity\DmsInstanceEntityInterface
+   *   The called DMS Instance entity.
+   */
+  public function setRevisionCreationTime($timestamp);
+
+  /**
+   * Gets the DMS Instance revision author.
+   *
+   * @return \Drupal\user\UserInterface
+   *   The user entity for the revision author.
+   */
+  public function getRevisionUser();
+
+  /**
+   * Sets the DMS Instance revision author.
+   *
+   * @param int $uid
+   *   The user ID of the revision author.
+   *
+   * @return \Drupal\dms_instance\Entity\DmsInstanceEntityInterface
+   *   The called DMS Instance entity.
+   */
+  public function setRevisionUserId($uid);
+
   public function getAegirInstance();
 
 }
