@@ -26,3 +26,17 @@ function dms_instance_update_9101() {
   \Drupal::entityDefinitionUpdateManager()
     ->installFieldStorageDefinition('aegir_instance', 'dms_instance', 'dms_instance', $field_storage_definition);
 }
+
+/**
+ * Alter certain columns to be not required
+ */
+function dms_instance_update_9102() {
+  $bundle_of = 'dms_instance';
+  $definition_manager = \Drupal::entityDefinitionUpdateManager(); 
+  $fieldsToUpdate = ['email_address', 'email_name', 'email_password', 'smtp_service'];
+  foreach ($fieldsToUpdate as $field_name) {
+    $field_storage_definition = $definition_manager->getFieldStorageDefinition($field_name, $bundle_of);
+    $field_storage_definition->setRequired(FALSE);
+    $definition_manager->updateFieldStorageDefinition($field_storage_definition);
+  }
+}
