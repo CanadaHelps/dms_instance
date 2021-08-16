@@ -97,7 +97,7 @@ class DmsInstanceEntityRevisionDeleteForm extends ConfirmFormBase {
       'entity.dms_instance.canonical',
        ['dms_instance' => $this->revision->id()]
     );
-    if ($this->connection->query('SELECT COUNT(DISTINCT revision_id) FROM {dms_instance_field_revision} WHERE id = :id', [':id' => $this->revision->id()])->fetchField() > 1) {
+    if ($this->connection->query('SELECT COUNT(DISTINCT revision_id) FROM {dms_instance_field_data_revision} WHERE id = :id', [':id' => $this->revision->id()])->fetchField() > 1) {
       $form_state->setRedirect(
         'entity.dms_instance.version_history',
          ['dms_instance' => $this->revision->id()]
