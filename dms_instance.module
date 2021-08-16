@@ -9,7 +9,6 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Database\Database;
-use Drupal\Core\Queue\DatabaseQueue; 
 use Drupal\dms_instance\Queue\DMSInstanceQueue;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
@@ -54,6 +53,7 @@ function dms_instance_insert_update(EntityInterface $entity) {
   $instanceStatus = $entity->get('instance_status')->value;
   if ($instanceStatus == 16) {
     $uuid = $entity->uuid();
+    /** @var Drupal\dms_instance\Queue\DMSInstanceQueue; $queue */
     $queue = new DMSInstanceQueue($entity->getAegirInstance(), Database::getConnection());
     $queue->createQueue();
     $queue->createItem([
@@ -76,6 +76,7 @@ function aegirInstances() {
 function dms_instance_cron() {
   foreach (aegirInstances() as $aegirInstance) {
     $queue = new DMSInstanceQueue($aegirInstance, Database::getConnection());
+    /** @var Drupal\dms_instance\Queue\DMSInstanceQueue; $queue */
     $queue->createQueue();
     $count = Database::getConnection()->query('SELECT COUNT(item_id) as count FROM {queue} WHERE [name] = :name AND [expire] != 0', [':name' => $aegirInstance])->fetchField();
     // Do not process any more objects if there are already ones in process.
@@ -92,9 +93,27 @@ function dms_instance_cron() {
         'form_params' => $item->data,
         'timeout' => 10,
       ]);
+      $contents = $request->getBody()->getContents();
+      $contents = json_decode($contents, TRUE);
+      if ($contents['status'] == 'error') {
+        /** @var \Drupal\dms_instance\Entity $dms_instance */
+        $dms_instance = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $item->data['dms_instance_id']]);
+        reset($dms_instance);
+        // Set DMS status to error on provisioning and also delete the queue item so we don't get blocked.
+        $dms_instance->instance_status = 21;
+        $dms_instance->save();
+        $queue->deleteItem($item);
+      }
       \Drupal::logger('dms_instance')->debug('%request, %body', ['%body' => $request->getBody()->getContents()]);
     }
     catch (\Exception $e) {
+      /** @var \Drupal\dms_instance\Entity $dms_instance */
+      $dms_instance = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $item->data['dms_instance_id']]);
+      reset($dms_instance);
+      // Set DMS status to error on provisioning and also delete the queue item so we don't get blocked.
+      $dms_instance->instance_status = 21;
+      $dms_instance->save();
+      $queue->deleteItem($item);
       \Drupal::logger('dms_instance')->debug($e->getMessage() . '%item', ['%item' => var_export($item, TRUE)]);
     }
   }
