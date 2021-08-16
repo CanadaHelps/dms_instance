@@ -11,6 +11,8 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Queue\DatabaseQueue; 
 use Drupal\dms_instance\Queue\DMSInstanceQueue;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
 
 /**
  * Implements hook_help().
@@ -39,15 +41,27 @@ function dms_instance_jsonapi_entity_filter_access(\Drupal\Core\Entity\EntityTyp
   }
 }
 
+
+function dms_instance_dms_instance_update(EntityInterface $entity) {
+  dms_instance_insert_update($entity);
+}
+
 function dms_instance_dms_instance_insert(EntityInterface $entity) {
-  $uuid = $entity->uuid();
-  $queue = new DMSInstanceQueue($entity->getAegirInstance(), Database::getConnection());
-  $queue->createQueue();
-  $queue->createItem([
-    'url' => $entity->getName() . '-dms.canadahelps.org',
-    'dms_instance_id' => $uuid,
-    'aegir_instance' => $entity->getAegirInstance(),
-  ]);
+  dms_instance_insert_update($entity);
+}
+
+function dms_instance_insert_update(EntityInterface $entity) {
+  $instanceStatus = $entity->get('instance_status')->value;
+  if ($instanceStatus == 16) {
+    $uuid = $entity->uuid();
+    $queue = new DMSInstanceQueue($entity->getAegirInstance(), Database::getConnection());
+    $queue->createQueue();
+    $queue->createItem([
+      'url' => $entity->getName() . '-dms.canadahelps.org',
+      'dms_instance_id' => $uuid,
+      'aegir_instance' => $entity->getAegirInstance(),
+    ]);
+  }
 }
 
 function aegirInstances() {
@@ -84,4 +98,16 @@ function dms_instance_cron() {
       \Drupal::logger('dms_instance')->debug($e->getMessage() . '%item', ['%item' => var_export($item, TRUE)]);
     }
   }
+}
+
+function dms_instance_allowed_values_function(FieldStorageDefinitionInterface $definition, FieldableEntityInterface $entity = NULL, $cacheable) {
+  $config = \Drupal::config('dms_instance.settings');
+  $instance_statues = $config->get('instance_statuses');
+  $instance_statues_saved = explode("\n", $instance_statues);
+  $statuses = [];
+  foreach ($instance_statues_saved as $instanceStatus) {
+    $status = explode(' | ', $instanceStatus);
+    $statuses[$status[0]] = $status[1];
+  }
+  return $statuses;
 }
