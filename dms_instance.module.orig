@@ -46,6 +46,7 @@ function dms_instance_dms_instance_update(EntityInterface $entity) {
 }
 
 function dms_instance_dms_instance_insert(EntityInterface $entity) {
+<<<<<<< HEAD
   dms_instance_insert_update($entity);
 }
 
@@ -53,15 +54,25 @@ function dms_instance_insert_update(EntityInterface $entity) {
   $instanceStatus = $entity->get('instance_status')->value;
   if ($instanceStatus == 16) {
     $uuid = $entity->uuid();
-    /** @var Drupal\dms_instance\Queue\DMSInstanceQueue; $queue */
     $queue = new DMSInstanceQueue($entity->getAegirInstance(), Database::getConnection());
     $queue->createQueue();
     $queue->createItem([
-      'url' => $entity->getName() . '-dms.' . SITE_DOMAIN_HOST,
+      'url' => $entity->getName() . '-dms.canadahelps.org',
       'dms_instance_id' => $uuid,
       'aegir_instance' => $entity->getAegirInstance(),
     ]);
   }
+=======
+  $uuid = $entity->uuid();
+  /** @var Drupal\dms_instance\Queue\DMSInstanceQueue; $queue */
+  $queue = new DMSInstanceQueue($entity->getAegirInstance(), Database::getConnection());
+  $queue->createQueue();
+  $queue->createItem([
+    'url' => $entity->getName() . '-dms.' . SITE_DOMAIN_HOST,
+    'dms_instance_id' => $uuid,
+    'aegir_instance' => $entity->getAegirInstance(),
+  ]);
+>>>>>>> a646874... Add in Error handling to when provisioning an instance if it cannot be provisioned
 }
 
 function aegirInstances() {
