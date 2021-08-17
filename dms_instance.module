@@ -101,14 +101,14 @@ function dms_instance_cron() {
       if ($contents['status'] == 'error') {
         /** @var \Drupal\dms_instance\Entity $dms_instance */
         $dms_instance = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $item->data['dms_instance_id']]);
-	reset($dms_instance);
-	$dms_instance = array_values($dms_instance)[0];
+	      reset($dms_instance);
+	      $dms_instance = array_values($dms_instance)[0];
         \Drupal::logger('dms_instance')->debug('%instance %data', ['%instance' => var_export($dms_instance, TRUE), '%data' => var_export($item->data, TRUE)]);
-	if (!empty($dms_instance)) {
+	      if (!empty($dms_instance)) {
           // Set DMS status to error on provisioning and also delete the queue item so we don't get blocked.
           $dms_instance->instance_status = 21;
           $dms_instance->save();
-	}
+	      }
         $queue->deleteItem($item);
       }
       \Drupal::logger('dms_instance')->debug('%body', ['%body' => var_export($request->getBody()->getContents(), TRUE)]);
