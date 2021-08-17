@@ -99,14 +99,20 @@ function dms_instance_cron() {
       $contents = $request->getBody()->getContents();
       $contents = json_decode($contents, TRUE);
       if ($contents['status'] == 'error') {
+        $dms_instances = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $item->data['dms_instance_id']]);
+        reset($dms_instances); 
         /** @var \Drupal\dms_instance\Entity $dms_instance */
-        $dms_instance = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $item->data['dms_instance_id']]);
-	      reset($dms_instance);
-	      $dms_instance = array_values($dms_instance)[0];
+        $dms_instance = array_values($dms_instances)[0];
         \Drupal::logger('dms_instance')->debug('%instance %data', ['%instance' => var_export($dms_instance, TRUE), '%data' => var_export($item->data, TRUE)]);
 	      if (!empty($dms_instance)) {
           // Set DMS status to error on provisioning and also delete the queue item so we don't get blocked.
           $dms_instance->instance_status = 21;
+          if (strpos($contents['message'], 'max capacity') !== FALSE) {
+            $dms_instance->instance_status = 22;
+          }
+          if ($contents['message'] == 'The site already exists.') {
+            $dms_instance->instance_status = 24;
+          }
           $dms_instance->save();
 	      }
         $queue->deleteItem($item);
@@ -114,14 +120,14 @@ function dms_instance_cron() {
       \Drupal::logger('dms_instance')->debug('%body', ['%body' => var_export($request->getBody()->getContents(), TRUE)]);
     }
     catch (\Exception $e) {
+      $dms_instances = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $item->data['dms_instance_id']]);
+      reset($dms_instances); 
       /** @var \Drupal\dms_instance\Entity $dms_instance */
-      $dms_instance = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $item->data['dms_instance_id']]);
-      reset($dms_instance); 
-      $dms_instance = array_values($dms_instance)[0];
+      $dms_instance = array_values($dms_instances)[0];
       \Drupal::logger('dms_instance')->debug('%instance %data', ['%instance' => var_export($dms_instance, TRUE), '%data' => var_export($item->data, TRUE)]);
       if (!empty($dms_instance)) {
         // Set DMS status to error on provisioning and also delete the queue item so we don't get blocked.
-        $dms_instance->instance_status = 21;
+        $dms_instance->instance_status = 23;
         $dms_instance->save();
       }
       $queue->deleteItem($item);
