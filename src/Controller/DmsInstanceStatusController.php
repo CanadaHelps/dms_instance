@@ -40,7 +40,7 @@ class DmsInstanceStatusController extends ControllerBase {
     $statuses = [];
     foreach ($instance_statues_saved as $instanceStatus) {
       $status = explode(' | ', $instanceStatus);
-      $statuses[$status[0]] = $status[1];
+      $statuses[$status[0]] = trim($status[1]);
     }
     return new JsonResponse([
       'data' => $statuses,
