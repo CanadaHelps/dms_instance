@@ -23,3 +23,11 @@ dms_instance.dms_instance_settings_form:
     _permission: 'access administration pages'
   options:
     _admin_route: TRUE
+dms_instance.dms_instance_statues:
+  path: '/dms_instance/statuses'
+  defaults:
+    _controller: 'Drupal\dms_instance\Controller\DmsInstanceStatusController::renderStatuses'
+    _title: 'DMS Instance Statues'
+  methods: [GET]
+  requirements:
+    _permission: 'add dms instance entities'
