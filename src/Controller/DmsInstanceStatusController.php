@@ -22,9 +22,6 @@ class DmsInstanceStatusController extends ControllerBase {
    */
   public function __construct(ClientInterface $http_client) {
     $this->httpClient = $http_client;
-    $module_handler = \Drupal::service('module_handler');
-    $module_path = $module_handler->getModule('dms_instance')->getPath();
-    require_once($module_path . DIRECTORY_SEPARATOR . 'dms_instance_secrets.inc');
   }
 
   /**
