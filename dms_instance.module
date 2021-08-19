@@ -113,11 +113,12 @@ function dms_instance_cron() {
           if ($contents['message'] == 'The site already exists.') {
             $dms_instance->instance_status = 24;
           }
+          $dms_instance->setNewRevision();
           $dms_instance->save();
 	      }
         $queue->deleteItem($item);
       }
-      \Drupal::logger('dms_instance')->debug('%body', ['%body' => var_export($request->getBody()->getContents(), TRUE)]);
+      \Drupal::logger('dms_instance')->debug('%body L121', ['%body' => var_export($request->getBody()->getContents(), TRUE)]);
     }
     catch (\Exception $e) {
       $dms_instances = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $item->data['dms_instance_id']]);
@@ -128,6 +129,7 @@ function dms_instance_cron() {
       if (!empty($dms_instance)) {
         // Set DMS status to error on provisioning and also delete the queue item so we don't get blocked.
         $dms_instance->instance_status = 23;
+        $dms_instance->setNewRevision();
         $dms_instance->save();
       }
       $queue->deleteItem($item);

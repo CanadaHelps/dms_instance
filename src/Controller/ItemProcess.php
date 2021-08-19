@@ -18,6 +18,7 @@ class ItemProcess extends ControllerBase {
     reset($dms_instance);
     $dms_instance = array_values($dms_instance)[0];
     $dms_instance->instance_status = 17;
+    $dms_instance->setNewRevision();
     $dms_instance->save();
     $queue = new DMSInstanceQueue($aegir_instance, Database::getConnection());
     $item = new \stdClass();
