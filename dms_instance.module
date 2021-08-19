@@ -103,8 +103,7 @@ function dms_instance_cron() {
         reset($dms_instances); 
         /** @var \Drupal\dms_instance\Entity $dms_instance */
         $dms_instance = array_values($dms_instances)[0];
-        \Drupal::logger('dms_instance')->debug('%instance %data', ['%instance' => var_export($dms_instance, TRUE), '%data' => var_export($item->data, TRUE)]);
-	      if (!empty($dms_instance)) {
+        if (!empty($dms_instance)) {
           // Set DMS status to error on provisioning and also delete the queue item so we don't get blocked.
           $dms_instance->instance_status = 21;
           if (strpos($contents['message'], 'max capacity') !== FALSE) {
@@ -115,10 +114,10 @@ function dms_instance_cron() {
           }
           $dms_instance->setNewRevision();
           $dms_instance->save();
-	      }
+        }
         $queue->deleteItem($item);
       }
-      \Drupal::logger('dms_instance')->debug('%body L121', ['%body' => var_export($request->getBody()->getContents(), TRUE)]);
+      \Drupal::logger('dms_instance')->debug('%body L121', ['%body' => var_export($contents, TRUE)]);
     }
     catch (\Exception $e) {
       $dms_instances = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $item->data['dms_instance_id']]);
