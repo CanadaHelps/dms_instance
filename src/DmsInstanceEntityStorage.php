@@ -32,7 +32,7 @@ class DmsInstanceEntityStorage extends SqlContentEntityStorage implements DmsIns
    */
   public function userRevisionIds(AccountInterface $account) {
     return $this->database->query(
-      'SELECT revision_id FROM {dms_instance_field_revision} WHERE uid = :uid ORDER BY revision_id',
+      'SELECT revision_id FROM {dms_instance_field_data_revision} WHERE uid = :uid ORDER BY revision_id',
       [':uid' => $account->id()]
     )->fetchCol();
   }
@@ -41,7 +41,7 @@ class DmsInstanceEntityStorage extends SqlContentEntityStorage implements DmsIns
    * {@inheritdoc}
    */
   public function countDefaultLanguageRevisions(DmsInstanceEntityInterface $entity) {
-    return $this->database->query('SELECT COUNT(*) FROM {dms_instance_field_revision} WHERE id = :id AND default_langcode = 1', [':id' => $entity->id()])
+    return $this->database->query('SELECT COUNT(*) FROM {dms_instance_field_data_revision} WHERE id = :id AND default_langcode = 1', [':id' => $entity->id()])
       ->fetchField();
   }
 

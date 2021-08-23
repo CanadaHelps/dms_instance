@@ -9,7 +9,6 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Database\Database;
-use Drupal\Core\Queue\DatabaseQueue; 
 use Drupal\dms_instance\Queue\DMSInstanceQueue;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
@@ -51,13 +50,17 @@ function dms_instance_dms_instance_insert(EntityInterface $entity) {
 }
 
 function dms_instance_insert_update(EntityInterface $entity) {
+  $module_handler = \Drupal::service('module_handler');
+  $module_path = $module_handler->getModule('dms_instance')->getPath();
+  require_once($module_path . DIRECTORY_SEPARATOR . 'dms_instance_secrets.inc');
   $instanceStatus = $entity->get('instance_status')->value;
   if ($instanceStatus == 16) {
     $uuid = $entity->uuid();
+    /** @var Drupal\dms_instance\Queue\DMSInstanceQueue; $queue */
     $queue = new DMSInstanceQueue($entity->getAegirInstance(), Database::getConnection());
     $queue->createQueue();
     $queue->createItem([
-      'url' => $entity->getName() . '-dms.canadahelps.org',
+      'url' => $entity->getName() . '-dms.' . SITE_DOMAIN_HOST,
       'dms_instance_id' => $uuid,
       'aegir_instance' => $entity->getAegirInstance(),
     ]);
@@ -76,6 +79,7 @@ function aegirInstances() {
 function dms_instance_cron() {
   foreach (aegirInstances() as $aegirInstance) {
     $queue = new DMSInstanceQueue($aegirInstance, Database::getConnection());
+    /** @var Drupal\dms_instance\Queue\DMSInstanceQueue; $queue */
     $queue->createQueue();
     $count = Database::getConnection()->query('SELECT COUNT(item_id) as count FROM {queue} WHERE [name] = :name AND [expire] != 0', [':name' => $aegirInstance])->fetchField();
     // Do not process any more objects if there are already ones in process.
@@ -92,9 +96,42 @@ function dms_instance_cron() {
         'form_params' => $item->data,
         'timeout' => 10,
       ]);
-      \Drupal::logger('dms_instance')->debug('%request, %body', ['%body' => $request->getBody()->getContents()]);
+      $contents = $request->getBody()->getContents();
+      $contents = json_decode($contents, TRUE);
+      if ($contents['status'] == 'error') {
+        $dms_instances = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $item->data['dms_instance_id']]);
+        reset($dms_instances); 
+        /** @var \Drupal\dms_instance\Entity $dms_instance */
+        $dms_instance = array_values($dms_instances)[0];
+        if (!empty($dms_instance)) {
+          // Set DMS status to error on provisioning and also delete the queue item so we don't get blocked.
+          $dms_instance->instance_status = 21;
+          if (strpos($contents['message'], 'max capacity') !== FALSE) {
+            $dms_instance->instance_status = 22;
+          }
+          if ($contents['message'] == 'The site already exists.') {
+            $dms_instance->instance_status = 24;
+          }
+          $dms_instance->setNewRevision();
+          $dms_instance->save();
+        }
+        $queue->deleteItem($item);
+      }
+      \Drupal::logger('dms_instance')->debug('%body L121', ['%body' => var_export($contents, TRUE)]);
     }
     catch (\Exception $e) {
+      $dms_instances = \Drupal::entityTypeManager()->getStorage('dms_instance')->loadByProperties(['uuid' => $item->data['dms_instance_id']]);
+      reset($dms_instances); 
+      /** @var \Drupal\dms_instance\Entity $dms_instance */
+      $dms_instance = array_values($dms_instances)[0];
+      \Drupal::logger('dms_instance')->debug('%instance %data', ['%instance' => var_export($dms_instance, TRUE), '%data' => var_export($item->data, TRUE)]);
+      if (!empty($dms_instance)) {
+        // Set DMS status to error on provisioning and also delete the queue item so we don't get blocked.
+        $dms_instance->instance_status = 23;
+        $dms_instance->setNewRevision();
+        $dms_instance->save();
+      }
+      $queue->deleteItem($item);
       \Drupal::logger('dms_instance')->debug($e->getMessage() . '%item', ['%item' => var_export($item, TRUE)]);
     }
   }

@@ -40,7 +40,7 @@ use Drupal\user\UserInterface;
  *   base_table = "dms_instance",
  *   data_table = "dms_instance_field_data",
  *   revision_table = "dms_instance_revision",
- *   revision_data_table = "dms_instance_field_revision",
+ *   revision_data_table = "dms_instance_field_data_revision",
  *   translatable = TRUE,
  *   admin_permission = "administer dms instance entities",
  *   entity_keys = {
